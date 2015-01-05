@@ -1,7 +1,7 @@
 StringTree
 ==========
 
-A simplified json like for tree data representation like StringTree/examples/tree.txt
+A simplified json like for tree data representation like [here](StringTree/examples/tree.txt)
 
 MIT Licence
 -----------
