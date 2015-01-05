@@ -1,34 +1,7 @@
 StringTree
 ==========
 
-A simplified json like for tree data representation like
-
-{
-
-Craft:
-{
-  pc_craft_potion:
-  {
-    pc_healing_potion_lv1: {
-      pc_little_flask 1
-      pc_flower_red 2
-    }
-  }
-}
-
-Decoration:
-{
-  pc_gold_bed:
-  {
-    "pc_gold_bed.png"
-    "pc_gold_bed_icon.png"
-    "pc_gold_bed_icon.png"
-    "gold bed"
-    "A gold bed"
-  }
-}
-
-}
+A simplified json like for tree data representation like StringTree/examples/tree.txt
 
 MIT Licence
 -----------
