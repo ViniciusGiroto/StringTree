@@ -40,67 +40,67 @@ class Lexer {
     while (this.char.match(/\s/))
       this.nextChar
 
-    if (this.char == '/') {
-      // One line comment
-      if (this.char == '/') {
-        while (this.nextChar.match(/[^\n\0]/)) {}
+    switch(this.char) {
+      case '/': {
+        // One line comment
+        if (this.char == '/') {
+          while (this.nextChar.match(/[^\n\0]/)) {}
 
-        if (this.char == '\0')
-          return Token.Eof
-        return this.getToken()
+          if (this.char == '\0')
+            return Token.Eof
+          return this.getToken()
+        }
+        // Multi lines comment
+        else if (this.char == '*') {
+          do {
+            while (this.nextChar != '*')
+              if (this.char == '\0')
+                return Token.Eof
+          } while(this.nextChar != '/')
+        } else
+          this.cursor--
+          break
       }
-      // Multi lines comment
-      else if (this.char == '*') {
-        do {
-          while (this.nextChar != '*')
-            if (this.char == '\0')
-              return Token.Eof
-        } while(this.nextChar != '/')
-      } else
-        this.cursor--
-    }
-
-    if (this.char == '{') {
-      this.nextChar
-      return Token.LeftBrace
-    }
-
-    if (this.char == '}') {
-      this.nextChar
-      return Token.RightBrace
-    }
-
-    if (this.char == ':') {
-      this.nextChar
-      return Token.Colon
-    }
-
-    if (this.char == '"') {
-      this.identifier = ''
-
-      while (this.nextChar != '"') {
-        if (this.char == '\\')
-          if (this.nextChar == '"')
-            this.identifier += '"'
-          else if (this.char == 'n')
-            this.identifier += '\n'
-          else
-            this.identifier += '\\' + this.char
-        this.identifier += this.char
+      case '{': {
+        this.nextChar
+        return Token.LeftBrace
       }
+      case '}': {
+        this.nextChar
+        return Token.RightBrace
+      }
+      case ':': {
+        this.nextChar
+        return Token.Colon
+      }
+      case '"': {
+        this.identifier = ''
 
-      this.nextChar
-      return Token.Identifier
+        while (this.nextChar != '"') {
+          if (this.char == '\\')
+            if (this.nextChar == '"')
+              this.identifier += '"'
+            else if (this.char == 'n')
+              this.identifier += '\n'
+            else
+              this.identifier += '\\' + this.char
+          this.identifier += this.char
+        }
+
+        this.nextChar
+        return Token.Identifier
+      }
+      default: {
+        if (IdentifierRegExp.test(this.char)) {
+          this.identifier = this.char
+          while (IdentifierRegExp2.test(this.nextChar))
+            this.identifier += this.char
+          return Token.Identifier
+        }
+
+        return Token.Eof
+      }
     }
-
-    if (IdentifierRegExp.test(this.char)) {
-      this.identifier = this.char
-      while (IdentifierRegExp2.test(this.nextChar))
-        this.identifier += this.char
-      return Token.Identifier
-    }
-
-    return Token.Eof
   }
   get char() {
     return this.lastChar
@@ -157,6 +157,22 @@ class StringTree {
 }
 
 class StringTreeParser {
+  static parseString(str) {
+    let lex = new Lexer(str)
+    lex.get()
+    let node = new StringTree
+    this.parseElements(lex, node)
+    return node
+  }
+
+  static parseFile(path) {
+    try {
+      return this.parseString(fs.readFileSync(path).toString())
+    } catch(err) {
+      return
+    }
+  }
+
   static parseElements(lex, root) {
     // lex = Lexer
     // root = array of StringTree
@@ -182,22 +198,6 @@ class StringTreeParser {
         }
       } else if (lex.last() == Token.Eof)
         return;
-    }
-  }
-
-  static parseString(str) {
-    let lex = new Lexer(str)
-    lex.get()
-    let node = new StringTree
-    this.parseElements(lex, node)
-    return node
-  }
-
-  static parseFile(path) {
-    try {
-      return this.parseString(fs.readFileSync(path).toString())
-    } catch(err) {
-      return err
     }
   }
 }
