@@ -1,4 +1,3 @@
-const time = Date.now()
 const fs = require('fs')
 
 class Enum {
@@ -18,8 +17,12 @@ const Token = new Enum(
 )
 
 // for performance
-const IdentifierRegExp = /[\w_.+-]/,
-      IdentifierRegExp2 = /[\w_.]/
+const RegExps = {
+  Space: /\s/,
+  OneLineComment: /[^\n\0]/,
+  Identifier1stChar: /[\w_.+-]/,
+  IdentifierChar: /[\w_.]/
+}
 
 class Lexer {
   constructor(str) {
@@ -37,70 +40,69 @@ class Lexer {
     return this.lastToken
   }
   getToken() {
-    while (this.char.match(/\s/))
-      this.nextChar
+    while (RegExps.Space.test(this.char)) {this.nextChar};
 
-    if (this.char == '/') {
-      // One line comment
-      if (this.char == '/') {
-        while (this.nextChar.match(/[^\n\0]/)) {}
+    switch(this.char) {
+      case '/': {
+        // One line comment
+        if (this.nextChar == '/') {
+          while (RegExps.OneLineComment.test(this.nextChar));
 
-        if (this.char == '\0')
-          return Token.Eof
-        return this.getToken()
+          if (this.char == '\0')
+            return Token.Eof
+          return this.getToken()
+        }
+        // Multi lines comment
+        else if (this.char == '*') {
+          do {
+            while (this.nextChar != '*')
+              if (this.char == '\0')
+                return Token.Eof
+          } while(this.nextChar != '/')
+        } else
+          this.cursor--
+          break
       }
-      // Multi lines comment
-      else if (this.char == '*') {
-        do {
-          while (this.nextChar != '*')
-            if (this.char == '\0')
-              return Token.Eof
-        } while(this.nextChar != '/')
-      } else
-        this.cursor--
-    }
-
-    if (this.char == '{') {
-      this.nextChar
-      return Token.LeftBrace
-    }
-
-    if (this.char == '}') {
-      this.nextChar
-      return Token.RightBrace
-    }
-
-    if (this.char == ':') {
-      this.nextChar
-      return Token.Colon
-    }
-
-    if (this.char == '"') {
-      this.identifier = ''
-
-      while (this.nextChar != '"') {
-        if (this.char == '\\')
-          if (this.nextChar == '"')
-            this.identifier += '"'
-          else if (this.char == 'n')
-            this.identifier += '\n'
-          else
-            this.identifier += '\\' + this.char
-        this.identifier += this.char
+      case '{': {
+        this.nextChar
+        return Token.LeftBrace
       }
+      case '}': {
+        this.nextChar
+        return Token.RightBrace
+      }
+      case ':': {
+        this.nextChar
+        return Token.Colon
+      }
+      case '"': {
+        this.identifier = ''
 
-      this.nextChar
-      return Token.Identifier
+        while (this.nextChar != '"') {
+          if (this.char == '\\')
+            if (this.nextChar == '"')
+              this.identifier += '"'
+            else if (this.char == 'n')
+              this.identifier += '\n'
+            else
+              this.identifier += '\\' + this.char
+          this.identifier += this.char
+        }
+
+        this.nextChar
+        return Token.Identifier
+      }
+      default: {
+        if (RegExps.Identifier1stChar.test(this.char)) {
+          this.identifier = this.char
+          while (RegExps.IdentifierChar.test(this.nextChar))
+            this.identifier += this.char
+          return Token.Identifier
+        }
+
+        return Token.Eof
+      }
     }
-
-    if (IdentifierRegExp.test(this.char)) {
-      this.identifier = this.char
-      while (IdentifierRegExp2.test(this.nextChar))
-        this.identifier += this.char
-      return Token.Identifier
-    }
-
-    return Token.Eof
   }
   get char() {
     return this.lastChar
@@ -121,10 +123,12 @@ class StringTree {
     this._children = []
   }
   get(id) {
+    if (typeof id == 'number')
+      return this.getChildren()[id]
     for (let child of this.getChildren())
       if (child.getName() === id) return child
   }
-  getAll() {
+  getAll(id) {
     let children = []
     for (let child of this.getChildren())
       if (child.getName() === id) children.push(child)
@@ -197,10 +201,9 @@ class StringTreeParser {
     try {
       return this.parseString(fs.readFileSync(path).toString())
     } catch(err) {
-      return
+      return err
     }
   }
 }
 
-console.log(StringTreeParser.parseFile('/home/vinicius/.steam/steam/steamapps/common/Planet Centauri/assets/moddable/Chests/chests.txt'))
-console.log(Date.now() - time)
+module.exports = StringTreeParser
