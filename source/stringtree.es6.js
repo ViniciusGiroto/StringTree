@@ -37,10 +37,8 @@ class Lexer {
   }
   getToken() {
     // Skip spaces
-    while (RegExps.Space.test(this.lastChar)) {
+    while (RegExps.Space.test(this.lastChar))
       this.nextChar
-      console.log('here')
-    }
 
     switch(this.lastChar) {
       // Skip comments
@@ -109,11 +107,7 @@ class Lexer {
     return this.lastChar
   }
   get nextChar() {
-    console.log('get nextChar')
-    console.log('cursor', this.cursor)
-    // if (this.cursor < this.str.length)
     return (this.lastChar = (this.str[this.cursor++] || '\0'))
-    // return '\0'
   }
 }
 
