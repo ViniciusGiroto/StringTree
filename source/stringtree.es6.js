@@ -26,7 +26,6 @@ class Lexer {
   }
   get() {
     this.lastToken = this.getToken()
-    console.log('onGet:', this.lastToken)
     return this.lastToken
   }
   last() {
@@ -182,7 +181,7 @@ function parseElements(lex, root) {
 
 
 class StringTreeParser {
-  parseString(str) {
+  static parseString(str) {
     let lex = new Lexer(str)
     lex.get()
     let node = new StringTree
@@ -190,9 +189,9 @@ class StringTreeParser {
     return node
   }
 
-  parseFile(path) {
+  static parseFile(path) {
     try {
-      const buffer = fs.readFileSync('../examples/tree.txt')
+      const buffer = fs.readFileSync(path)
       return parseString(buffer.toString())
     } catch(err) {
       return
