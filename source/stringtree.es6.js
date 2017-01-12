@@ -123,7 +123,7 @@ class StringTree {
     this._children = []
   }
   get(id) {
-    if (typEOF id == 'number')
+    if (typeof id == 'number')
       return this.getChildren()[id]
     for (let child of this.getChildren())
       if (child.getName() === id) return child
