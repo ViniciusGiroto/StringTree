@@ -170,7 +170,7 @@ class StringTreeParser {
       root.add(node)
 
       if (lex.last() == Token.LeftBrace) {
-        parseElements(lex, node)
+        this.parseElements(lex, node)
         lex.get()
       } else if (lex.last() == Token.Identifier) {
         node.setName(lex.identifier)
@@ -197,10 +197,10 @@ class StringTreeParser {
     try {
       return this.parseString(fs.readFileSync(path).toString())
     } catch(err) {
-      return err
+      return
     }
   }
 }
 
-console.log(StringTreeParser.parseFile('../examples/tree.txt'))
+console.log(StringTreeParser.parseFile('/home/vinicius/.steam/steam/steamapps/common/Planet Centauri/assets/moddable/Chests/chests.txt'))
 console.log(Date.now() - time)

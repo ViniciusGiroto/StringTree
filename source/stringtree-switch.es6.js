@@ -18,8 +18,12 @@ const Token = new Enum(
 )
 
 // for performance
-const IdentifierRegExp = /[\w_.+-]/,
-      IdentifierRegExp2 = /[\w_.]/
+const RegExps = Object.freeze({
+  Space: /\s/,
+  OneLineComment: /[^\n\0]/,
+  Identifier1stChar: /[\w_.+-]/,
+  IdentifierChar: /[\w_.]/
+})
 
 class Lexer {
   constructor(str) {
@@ -37,14 +41,13 @@ class Lexer {
     return this.lastToken
   }
   getToken() {
-    while (this.char.match(/\s/))
-      this.nextChar
+    while (RegExps.Space.test(this.char)) {this.nextChar};
 
     switch(this.char) {
       case '/': {
         // One line comment
-        if (this.char == '/') {
-          while (this.nextChar.match(/[^\n\0]/)) {}
+        if (this.nextChar == '/') {
+          while (RegExps.OneLineComment.test(this.nextChar));
 
           if (this.char == '\0')
             return Token.Eof
@@ -91,9 +94,9 @@ class Lexer {
         return Token.Identifier
       }
       default: {
-        if (IdentifierRegExp.test(this.char)) {
+        if (RegExps.Identifier1stChar.test(this.char)) {
           this.identifier = this.char
-          while (IdentifierRegExp2.test(this.nextChar))
+          while (RegExps.IdentifierChar.test(this.nextChar))
             this.identifier += this.char
           return Token.Identifier
         }
@@ -157,22 +160,6 @@ class StringTree {
 }
 
 class StringTreeParser {
-  static parseString(str) {
-    let lex = new Lexer(str)
-    lex.get()
-    let node = new StringTree
-    this.parseElements(lex, node)
-    return node
-  }
-
-  static parseFile(path) {
-    try {
-      return this.parseString(fs.readFileSync(path).toString())
-    } catch(err) {
-      return
-    }
-  }
-
   static parseElements(lex, root) {
     // lex = Lexer
     // root = array of StringTree
@@ -186,7 +173,7 @@ class StringTreeParser {
       root.add(node)
 
       if (lex.last() == Token.LeftBrace) {
-        parseElements(lex, node)
+        this.parseElements(lex, node)
         lex.get()
       } else if (lex.last() == Token.Identifier) {
         node.setName(lex.identifier)
@@ -200,7 +187,26 @@ class StringTreeParser {
         return;
     }
   }
+
+  static parseString(str) {
+    let lex = new Lexer(str)
+    lex.get()
+    let node = new StringTree
+    this.parseElements(lex, node)
+    return node
+  }
+
+  static parseFile(path) {
+    try {
+      return this.parseString(fs.readFileSync(path).toString())
+    } catch(err) {
+      return err
+    }
+  }
 }
 
-console.log(StringTreeParser.parseFile('../examples/tree.txt'))
+///home/vinicius/.steam/steam/steamapps/common/Planet Centauri/assets/moddable/Chests/chests.txt
+parse = StringTreeParser.parseFile('../examples/tree.txt')
+
+console.log(JSON.stringify(parse.get('Craft'), null, 2))
 console.log(Date.now() - time)
