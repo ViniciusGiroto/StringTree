@@ -13,7 +13,7 @@ const Token = new Enum(
   'RightBrace', // }
   'Colon',      // :
   'Undefined',
-  'Eof'
+  'EOF'
 )
 
 // for performance
@@ -32,32 +32,33 @@ class Lexer {
     this.cursor = 0
     this.identifier = null
   }
-  get() {
-    this.lastToken = this.getToken()
-    return this.lastToken
-  }
-  last() {
-    return this.lastToken
+  nextToken() {
+    return (this.lastToken = this.getToken())
   }
   getToken() {
-    while (RegExps.Space.test(this.char)) {this.nextChar};
+    // Skip spaces
+    while (RegExps.Space.test(this.lastChar)) {
+      this.nextChar
+      console.log('here')
+    }
 
-    switch(this.char) {
+    switch(this.lastChar) {
+      // Skip comments
       case '/': {
         // One line comment
         if (this.nextChar == '/') {
           while (RegExps.OneLineComment.test(this.nextChar));
 
-          if (this.char == '\0')
-            return Token.Eof
+          if (this.lastChar == '\0')
+            return Token.EOF
           return this.getToken()
         }
         // Multi lines comment
-        else if (this.char == '*') {
+        else if (this.lastChar == '*') {
           do {
             while (this.nextChar != '*')
-              if (this.char == '\0')
-                return Token.Eof
+              if (this.lastChar == '\0')
+                return Token.EOF
           } while(this.nextChar != '/')
         } else
           this.cursor--
@@ -79,41 +80,40 @@ class Lexer {
         this.identifier = ''
 
         while (this.nextChar != '"') {
-          if (this.char == '\\')
+          if (this.lastChar == '\\')
             if (this.nextChar == '"')
               this.identifier += '"'
-            else if (this.char == 'n')
+            else if (this.lastChar == 'n')
               this.identifier += '\n'
             else
-              this.identifier += '\\' + this.char
-          this.identifier += this.char
+              this.identifier += '\\' + this.lastChar
+          this.identifier += this.lastChar
         }
 
         this.nextChar
         return Token.Identifier
       }
       default: {
-        if (RegExps.Identifier1stChar.test(this.char)) {
-          this.identifier = this.char
+        if (RegExps.Identifier1stChar.test(this.lastChar)) {
+          this.identifier = this.lastChar
           while (RegExps.IdentifierChar.test(this.nextChar))
-            this.identifier += this.char
+            this.identifier += this.lastChar
           return Token.Identifier
         }
 
-        return Token.Eof
+        return Token.EOF
       }
     }
   }
   get char() {
     return this.lastChar
   }
-  get token() {
-    return this.lastToken
-  }
   get nextChar() {
-    if (this.cursor < this.str.length)
-      return this.lastChar = this.str[this.cursor++]
-    return '\0'
+    console.log('get nextChar')
+    console.log('cursor', this.cursor)
+    // if (this.cursor < this.str.length)
+    return (this.lastChar = (this.str[this.cursor++] || '\0'))
+    // return '\0'
   }
 }
 
@@ -123,7 +123,7 @@ class StringTree {
     this._children = []
   }
   get(id) {
-    if (typeof id == 'number')
+    if (typEOF id == 'number')
       return this.getChildren()[id]
     for (let child of this.getChildren())
       if (child.getName() === id) return child
@@ -165,33 +165,35 @@ class StringTreeParser {
     // lex = Lexer
     // root = array of StringTree
 
-    if (lex.last() != Token.LeftBrace)
+    if (lex.lastToken != Token.LeftBrace)
       return;
-    lex.get()
+    lex.nextToken()
 
-    while(lex.last() != Token.RightBrace) {
+    while(lex.lastToken != Token.RightBrace) {
       let node = new StringTree
       root.add(node)
 
-      if (lex.last() == Token.LeftBrace) {
+      if (lex.lastToken == Token.LeftBrace) {
         this.parseElements(lex, node)
-        lex.get()
-      } else if (lex.last() == Token.Identifier) {
+        lex.nextToken()
+      } else if (lex.lastToken == Token.Identifier) {
         node.setName(lex.identifier)
 
-        if (lex.get() == Token.Colon) {
-          lex.get()
+        if (lex.nextToken() == Token.Colon) {
+          lex.nextToken()
           this.parseElements(lex, node)
-          lex.get()
+          lex.nextToken()
         }
-      } else if (lex.last() == Token.Eof)
+      } else if (lex.lastToken == Token.EOF)
         return;
     }
   }
 
   static parseString(str) {
     let lex = new Lexer(str)
-    lex.get()
+    lex.nextToken()
+    if (lex.lastToken == Token.EOF)
+      return
     let node = new StringTree
     this.parseElements(lex, node)
     return node
