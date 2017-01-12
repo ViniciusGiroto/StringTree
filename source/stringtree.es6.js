@@ -1,3 +1,5 @@
+const fs = require('fs')
+
 class Enum {
   constructor(...e) {
     for (let name of e)
