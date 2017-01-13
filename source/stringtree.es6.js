@@ -179,7 +179,7 @@ class StringTreeParser {
           lex.nextToken()
         }
       } else if (lex.lastToken == Token.EOF)
-        return;
+        return
     }
   }
 
